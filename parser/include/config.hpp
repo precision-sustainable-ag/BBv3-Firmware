@@ -3,3 +3,7 @@
 //class ClearCore
 
 #endif
+
+#define AXES "XYZ"
+#define MAX_AXES 8
+
