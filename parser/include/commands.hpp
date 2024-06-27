@@ -28,4 +28,8 @@
 #define SPACE 32
 #define CR 13
 #define LF 10
+#define BAR 124 // |
 #define NULL_CHAR 0
+#define DECIMAL_POINT 46
+#define ZERO 48
+#define NINE 57
