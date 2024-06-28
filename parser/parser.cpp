@@ -6,9 +6,20 @@
 #include <commands.hpp>
 #include <types.hpp>
 #include <errors.hpp>
+#include "stdarg.h"
 //#include <ClearCore.h>
 
 using namespace std;
+
+int nprintf(ClearCore::EthernetTCPServer * server, const char * format, ...) {
+    va_list arg_list;
+    va_start(arg_list, format);
+    char output_buffer[MAX_BUFFER];
+    int chars = vsnprintf(output_buffer, MAX_BUFFER, format, arg_list);
+    server->write(output_buffer);
+    cout << output_buffer;
+    return chars;
+}
 
 class Parser {
 public:
@@ -243,6 +254,7 @@ private:
     bool config_mode = false;
     config_profile config;
     char command[MAX_CMD_LEN + 1];
+    ClearCore::EthernetTCPServer server;
 };
 
 int main(){

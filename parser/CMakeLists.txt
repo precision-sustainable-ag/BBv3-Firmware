@@ -9,6 +9,7 @@ add_executable(parser)
 
 target_sources(parser PRIVATE
     parser.cpp
+    ClearCoreSim.cpp
 )
 
 target_link_libraries(parser ClearCore)

@@ -1,10 +1,8 @@
-import subprocess
-from subprocess import Popen, PIPE, STDOUT
-from from_root import from_root
+import socket
 
-firmware_compiled = str(from_root("build/parser/parser"))
-print(firmware_compiled)
+host = "127.0.0.1"
+port = 8045
 
-process = Popen(args=(),bufsize=1, executable=firmware_compiled,stdin=PIPE,stdout=PIPE,stderr=STDOUT)
-print(process.communicate("?C\n")[0])
-process.kill()
+with socket.socket(socket.AF_NET, socket.SOCK_STREAM) as s:
+    s.connect(host, port)
+    s.send()

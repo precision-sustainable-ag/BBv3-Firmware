@@ -18,3 +18,11 @@ typedef struct config {
 #endif
     motor motors[4];
 } config_profile;
+
+namespace ClearCore{
+class EthernetTCPServer{
+public:
+    EthernetTCPServer();
+    int write(const char * buffer);
+};
+}

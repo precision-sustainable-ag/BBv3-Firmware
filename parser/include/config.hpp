@@ -16,3 +16,6 @@
 #define MAX_FLOATS_LENGTH 16  
 
 #define DIGITAL_CONNECTORS 9
+
+#define MAX_BUFFER 1024
+#define PORT 8045
