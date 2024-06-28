@@ -5,4 +5,4 @@
 #define MOTOR_BUSY -10 // Motors are not available for new command.
 #define MOTOR_CONFIG_FORMAT_ERR -20
 #define MOTOR_CONFIG_IDX_ERR -21 //Index of Motor invalid
-#define MOTOR_CONFIG_BOOL_ERR -22
+#define PARSE_BOOL_ERR -22

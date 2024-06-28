@@ -1,12 +1,12 @@
 typedef struct motor {
-    char axis;
+    char axis = NULL_CHAR;
     double cm_step;
     bool reverse = false;
     bool configured = false;
 } motor;
 
 typedef struct config {
-    int e_stop_io_port;
+    int e_stop_io_port = -1;
 #ifdef AXES
     char valid_axes[5] = AXES;
 #else

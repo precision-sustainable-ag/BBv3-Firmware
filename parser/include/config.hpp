@@ -15,3 +15,4 @@
 #define MAX_CMD_LEN 128
 #define MAX_FLOATS_LENGTH 16  
 
+#define DIGITAL_CONNECTORS 9
