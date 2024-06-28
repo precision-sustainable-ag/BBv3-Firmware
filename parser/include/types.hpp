@@ -5,6 +5,10 @@ typedef struct motor {
     bool configured = false;
 } motor;
 
+typedef struct axis {
+    double cm_rev;
+} axis;
+
 typedef struct config {
     int e_stop_io_port = -1;
 #ifdef AXES
