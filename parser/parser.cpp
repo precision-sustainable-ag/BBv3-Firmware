@@ -11,21 +11,32 @@
 
 using namespace std;
 
-int nprintf(ClearCore::EthernetTCPServer * server, const char * format, ...) {
+int nprintf(const char * format, ...) {
     va_list arg_list;
     va_start(arg_list, format);
+    bool net = false;
+    ClearCore::EthernetTCPServer * server;
+    if (format[0] == AT) {
+        net = true;
+        server = va_arg(arg_list, ClearCore::EthernetTCPServer *);
+        format ++;
+    }
     char output_buffer[MAX_BUFFER];
     int chars = vsnprintf(output_buffer, MAX_BUFFER, format, arg_list);
-    server->write(output_buffer);
+    if (net) server->Send(&output_buffer[0]);
     cout << output_buffer;
     return chars;
 }
 
 class Parser {
 public:
-    Parser(){
+    Parser(ClearCore::EthernetTCPServer* server_ref){
         Parser::available = true;
         Parser::config = config;
+        server = server_ref;
+    }
+    ~Parser(){
+        return;
     }
 
     int32_t parse_command(char * input_command){
@@ -33,7 +44,7 @@ public:
         if (config_mode){
             if ((input_command[0] == C) && (input_command[1] == S)){
                 config_mode = false;
-                cout << "Configuration Done\n";
+                nprintf("Configuration Done\n");
             }
             else{
                 result = Parser::parse_config_command(input_command);
@@ -45,13 +56,13 @@ public:
             case M:{
                 switch (*(input_command++)){
                     case A:{
-                        cout << "Move Absolute Command\n";
+                        nprintf("Move Absolute Command\n");
                         Parser::absolute_motion = true;
                         result = Parser::parse_movement_command(input_command);
                         if (result < 0) return result;
                     } break;
                     case R:{
-                        cout << "Move Relative Command\n";
+                        nprintf("Move Relative Command\n");
                         Parser::absolute_motion = false;
                         result = Parser::parse_movement_command(input_command);
                         if (result < 0) return result;
@@ -65,33 +76,33 @@ public:
                 if (*(input_command++) == S){
                     Parser::config_mode = true;
                     Parser::last_valid_axis_idx;
-                    cout << "Ready for Configuration\n";
+                    nprintf("@Ready for Configuration\n",server);
                 }
             } break;
             case K:{
-                cout << "MOTORS STOPPED\n";
+                nprintf("MOTORS STOPPED\n");
                 return 0;
             } break;
             case QUESTION:{
                 switch (*(input_command ++)){
                     case P:{
-                        cout << "Query Position\n";
+                        nprintf("Query Position\n");
                     } break;
                     case C:{
-                        cout << "CURRENT CONFIG\n";
-                        printf("E-Stop I/O Port: %d\n", config.e_stop_io_port);
-                        printf("Valid Axes: %s\n",config.valid_axes);
+                        nprintf("CURRENT CONFIG\n");
+                        nprintf("E-Stop I/O Port: %d\n", config.e_stop_io_port);
+                        nprintf("Valid Axes: %s\n",config.valid_axes);
                         for (int i =0; i<MAX_AXES; i++){
-                            printf("- Motor: %d\n", i);
-                            printf(" - Axis: %c\n", config.motors[i].axis);
-                            printf(" - CM/Step: %f\n", config.motors[i].cm_step);
-                            printf(" - Reverse: %s\n",(config.motors[i].reverse) ? "True":"False");
-                            printf(" - Configured: %s\n",(config.motors[i].configured) ? "True":"False");
+                            nprintf("- Motor: %d\n", i);
+                            nprintf(" - Axis: %c\n", config.motors[i].axis);
+                            nprintf(" - CM/Step: %f\n", config.motors[i].cm_step);
+                            nprintf(" - Reverse: %s\n",(config.motors[i].reverse) ? "True":"False");
+                            nprintf(" - Configured: %s\n",(config.motors[i].configured) ? "True":"False");
                         }
                     } break;
                     case A:{
                         cout << "Query Axes\n";
-                        printf("Last Command: %c:%.2fcm %c:%.2fcm %c:%.2fcm\n",Parser::config.valid_axes[0],axis_floats[0],Parser::config.valid_axes[1],axis_floats[1],Parser::config.valid_axes[2],axis_floats[2]);
+                        nprintf("Last Command: %c:%.2fcm %c:%.2fcm %c:%.2fcm\n",Parser::config.valid_axes[0],axis_floats[0],Parser::config.valid_axes[1],axis_floats[1],Parser::config.valid_axes[2],axis_floats[2]);
                     } break;
                     case S:{
                         cout << "Query Status\n";
@@ -254,42 +265,69 @@ private:
     bool config_mode = false;
     config_profile config;
     char command[MAX_CMD_LEN + 1];
-    ClearCore::EthernetTCPServer server;
+    ClearCore::EthernetTCPServer * server;
 };
 
 int main(){
-    Parser parser;
+    Parser parser((ClearCore::EthernetTCPServer *) NULL);
+    char command_stream[128];
+    while (1){
+        fgets(&command_stream[0],128, stdin);
+        parser.parse_command(&command_stream[0]);
+    }
+}
+
+/* int main(){
+    cout << "Line 0 ";
+    ClearCore::EthernetTCPServer TCP_Server;
+    cout << "Line 1 ";
+    Parser temp_parser(&TCP_Server);
+    cout << "Line 2 ";
+    Parser* parser = &temp_parser;
+    cout << "Line 3 ";
     char command_stream[128];
     while(1){
         fgets(&command_stream[0],128,stdin);
-        switch (parser.parse_command(&command_stream[0])){
+        printf("CMD: %d",command_stream[0]);
+        if (command_stream[0] == AT){//"@"
+            int port;
+            sscanf(&command_stream[1],"%d", &port);
+            printf("Port: %d\n",port);
+            port = (port >= 1024 && port <= 65535) ? port : PORT;
+            TCP_Server.~EthernetTCPServer();
+            parser->~Parser();
+            ClearCore::EthernetTCPServer TCP_Server;
+            Parser temp_parser(&TCP_Server);
+            parser = &temp_parser;
+        }
+        switch (parser->parse_command(&command_stream[0])){
             case CMD_FORMAT_ERROR:
-                printf("CMD FORMAT ERROR\n");
+                nprintf("CMD FORMAT ERROR\n");
                 break;
             case FLOAT_INVALID:
-                printf("FLOAT INVALID\n");
+                nprintf("FLOAT INVALID\n");
                 break;
             case EXCEEDS_BUFFER:
-                printf("EXCEEDS BUFFER\n");
+                nprintf("EXCEEDS BUFFER\n");
                 break;
             case AXIS_ERROR:
-                printf("AXIS ERROR\n");
+                nprintf("AXIS ERROR\n");
                 break;
             case MOTOR_BUSY:
-                printf("MOTOR BUSY\n");
+                nprintf("MOTOR BUSY\n");
                 break;
             case MOTOR_CONFIG_FORMAT_ERR:
-                printf("MOTOR CONFIG FORMAT ERROR\n");
+                nprintf("MOTOR CONFIG FORMAT ERROR\n");
                 break;
             case MOTOR_CONFIG_IDX_ERR:
-                printf("MOTOR CONFIG INDEX ERROR\n");
+                nprintf("MOTOR CONFIG INDEX ERROR\n");
                 break;
             case PARSE_BOOL_ERR:
-                printf("MOTOR CONFIG BOOLEAN ERROR\n");
+                nprintf("MOTOR CONFIG BOOLEAN ERROR\n");
                 break;
             default:
                 break;
         }
-        printf("%c",4);
+        nprintf("%c",4);
     }
-}
+} */

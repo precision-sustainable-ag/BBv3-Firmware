@@ -8,4 +8,6 @@ else
 fi
 cmake ../
 make
+PARSER=$(pwd)/parser/parser
+alias parser="'$PARSER'"
 cd "$CUR_DIR_TEMP"

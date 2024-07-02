@@ -1,3 +1,5 @@
+#include <cstdint>
+
 typedef struct motor {
     char axis = NULL_CHAR;
     double cm_step;
@@ -19,10 +21,14 @@ typedef struct config {
     motor motors[4];
 } config_profile;
 
-namespace ClearCore{
-class EthernetTCPServer{
+namespace ClearCore {
+class EthernetTCPServer {
 public:
-    EthernetTCPServer();
-    int write(const char * buffer);
+    explicit EthernetTCPServer(uint16_t port = PORT);
+    ~EthernetTCPServer();
+    uint32_t Send(char * buffer);
+private:
+    //std::thread * TCP_thread;
+    int serverSd, bindStatus, connfd;
 };
 }

@@ -1,7 +1,10 @@
 #include <config.hpp>
+#include <commands.hpp>
+#include <types.hpp>
 #include <stdio.h>
 #include <string.h>
 #include <thread>
+#include <utility>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -10,25 +13,28 @@
 
 namespace ClearCore {
 
-class EthernetTCPServer {
-public:
-    EthernetTCPServer(){
-        char rx_buf[MAX_BUFFER];
-        sockaddr_in servAddr;
-        bzero((char*)&servAddr, sizeof(servAddr));
-        servAddr.sin_family = AF_INET;
-        servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        servAddr.sin_port = htons(PORT);
-        serverSd = socket(AF_INET, SOCK_STREAM, 0);
-        bindStatus = bind(serverSd, (struct sockaddr*) &servAddr, sizeof(servAddr));
-        listen(serverSd, CLIENT_MAX);
-    }
-    int write(const char * buffer){
-        
-    }
-private:
-    int serverSd, bindStatus;
-};
+EthernetTCPServer::EthernetTCPServer(uint16_t port){
+    char rx_buf[MAX_BUFFER];
+    connfd = 0;
+    sockaddr_in servAddr;
+    bzero((char*)&servAddr, sizeof(servAddr));
+    servAddr.sin_family = AF_INET;
+    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servAddr.sin_port = htons(port);
+    serverSd = socket(AF_INET, SOCK_STREAM, 0);
+    bindStatus = bind(serverSd, (struct sockaddr*) &servAddr, sizeof(servAddr));
+    if (bindStatus < 0) printf("Bind Error");
+    listen(serverSd, CLIENT_MAX);
+    connfd = accept(serverSd, (struct sockaddr*)NULL, NULL);
+}
+uint32_t EthernetTCPServer::Send(char * buffer){
+    write(connfd, buffer, strlen(buffer));
+}
+
+EthernetTCPServer::~EthernetTCPServer(){
+    close(connfd);
+    close(serverSd);
+}
 
 class MotorDriver{
 public:

@@ -12,4 +12,4 @@ target_sources(parser PRIVATE
     ClearCoreSim.cpp
 )
 
-target_link_libraries(parser ClearCore)
+#target_link_libraries(parser ClearCore)
