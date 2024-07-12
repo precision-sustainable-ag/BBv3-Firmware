@@ -31,6 +31,10 @@ uint32_t EthernetTCPServer::Send(char * buffer){
     write(connfd, buffer, strlen(buffer));
 }
 
+uint16_t EthernetTCPServer::Read(char * buffer, uint32_t length){
+    read(connfd, buffer, length);
+}
+
 EthernetTCPServer::~EthernetTCPServer(){
     close(connfd);
     close(serverSd);

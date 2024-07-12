@@ -27,6 +27,7 @@ public:
     explicit EthernetTCPServer(uint16_t port = PORT);
     ~EthernetTCPServer();
     uint32_t Send(char * buffer);
+    uint16_t Read(char * buffer, uint32_t length);
 private:
     //std::thread * TCP_thread;
     int serverSd, bindStatus, connfd;

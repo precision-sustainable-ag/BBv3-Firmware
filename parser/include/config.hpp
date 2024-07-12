@@ -18,4 +18,4 @@
 #define DIGITAL_CONNECTORS 9
 
 #define MAX_BUFFER 1024
-#define PORT 8047
+#define PORT 8049

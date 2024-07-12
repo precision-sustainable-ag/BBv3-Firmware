@@ -11,6 +11,10 @@
 
 using namespace std;
 
+bool is_end(char value){
+    return ((value == LF) || (value == CR));
+}
+
 int nprintf(const char * format, ...) {
     va_list arg_list;
     va_start(arg_list, format);
@@ -26,6 +30,16 @@ int nprintf(const char * format, ...) {
     if (net) server->Send(&output_buffer[0]);
     cout << output_buffer;
     return chars;
+}
+
+void nfgets(char * dest, int size, FILE *__restrict stream, ClearCore::EthernetTCPServer * server){
+    int counter = 0;
+    while ((counter < size) && !is_end(*dest)){
+        server->Read(dest, 1);
+        if (*dest) dest ++;
+        *dest = fgetc(stream);
+        if (*dest) dest ++;
+    }
 }
 
 class Parser {
@@ -269,26 +283,13 @@ private:
 };
 
 int main(){
-    Parser parser((ClearCore::EthernetTCPServer *) NULL);
-    char command_stream[128];
-    while (1){
-        fgets(&command_stream[0],128, stdin);
-        parser.parse_command(&command_stream[0]);
-    }
-}
-
-/* int main(){
-    cout << "Line 0 ";
     ClearCore::EthernetTCPServer TCP_Server;
-    cout << "Line 1 ";
     Parser temp_parser(&TCP_Server);
-    cout << "Line 2 ";
     Parser* parser = &temp_parser;
-    cout << "Line 3 ";
     char command_stream[128];
     while(1){
-        fgets(&command_stream[0],128,stdin);
-        printf("CMD: %d",command_stream[0]);
+        nfgets(&command_stream[0],128,stdin, &TCP_Server);
+        printf("%s",&command_stream[0]);
         if (command_stream[0] == AT){//"@"
             int port;
             sscanf(&command_stream[1],"%d", &port);
@@ -328,6 +329,5 @@ int main(){
             default:
                 break;
         }
-        nprintf("%c",4);
     }
-} */
+} 
