@@ -3,7 +3,7 @@ import threading
 import subprocess
 import time
 
-port = -1
+port = 8888
 
 def find_port():
     global port
@@ -22,7 +22,7 @@ def find_port():
         print("ERROR! Port number invalid! Quitting...")
     port = int(target_line)
 
-host = "127.0.0.1"
+host = "192.168.1.8" #"127.0.0.1"
 class SocketHandler:
     def __init__(self):
         self.thread_read = None
@@ -45,7 +45,7 @@ class SocketHandler:
         self.thread_read.start()
         self.thread_write.start()
 
-find_port()
+#find_port()
 handler = SocketHandler()
 handler.start_threads()
 
