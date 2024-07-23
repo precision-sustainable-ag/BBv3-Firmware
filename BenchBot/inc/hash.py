@@ -16,8 +16,13 @@ def hash(input_str: str):
 
 def load_file():
     global states
-    file = open("commands.hpp")
+    file = open("commands.h")
     lines = file.readlines()
+    print(lines[0])
+    lines.remove("#ifndef COMMANDS_H_\n")
+    lines.remove("#define COMMANDS_H_\n")
+    lines.remove("\n")
+    lines.remove("#endif\n")
     print(len(lines))
     if (len(lines) % 3) != 0:
         raise ValueError("Line Formatting wrong")
@@ -28,12 +33,13 @@ def add_state():
     global states
     name = input("Enter state name: ").upper()
     str_key = input("Enter string key: ")
-    states[name] = f"#define {name} 0x{hash(str_key):X}\n#define {name}_STR \"{str_key}\"\n\n"
+    states[name] = f"#define {name}_KEY 0x{hash(str_key):X}\n#define {name}_STR \"{str_key}\"\n\n"
 
 def write_states():
     global states
-    file = open("commands.hpp", "w")
-    file.writelines(states.values())
+    holder = ["#ifndef COMMANDS_H_\n","#define COMMANDS_H_\n","\n"] + [str(x) for x in states.values()] + ["#endif"]
+    file = open("commands.h", "w")
+    file.writelines(holder)
 
 base_actions = [inquirer.List("Next Action", "Action",
             choices= ["Add Item", "Remove Item", "Save to File", "Load from File", "KILL"]

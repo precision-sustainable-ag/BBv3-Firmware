@@ -4,6 +4,8 @@
 #include <iostream>
 #include <config.hpp>
 #include <commands.hpp>
+#include <chars.hpp>
+#include <states.hpp>
 #include <types.hpp>
 #include <errors.hpp>
 #include "stdarg.h"
@@ -22,21 +24,21 @@ int nprintf(const char * format, ...) {
     ClearCore::EthernetTCPServer * server;
     if (format[0] == AT) {
         net = true;
-        server = va_arg(arg_list, ClearCore::EthernetTCPServer *);
+        //server = va_arg(arg_list, ClearCore::EthernetTCPServer *);
         format ++;
     }
     char output_buffer[MAX_BUFFER];
     int chars = vsnprintf(output_buffer, MAX_BUFFER, format, arg_list);
-    if (net) server->Send(&output_buffer[0]);
+    //if (net) server->Send(&output_buffer[0]);
     cout << output_buffer;
     return chars;
 }
 
-void nfgets(char * dest, int size, FILE *__restrict stream, ClearCore::EthernetTCPServer * server){
+void nfgets(char * dest, int size, FILE *__restrict stream /*, ClearCore::EthernetTCPServer * server*/){
     int counter = 0;
     while ((counter < size) && !is_end(*dest)){
-        server->Read(dest, 1);
-        if (*dest) dest ++;
+        //server->Read(dest, 1);
+        //if (*dest) dest ++;
         *dest = fgetc(stream);
         if (*dest) dest ++;
     }
@@ -44,91 +46,58 @@ void nfgets(char * dest, int size, FILE *__restrict stream, ClearCore::EthernetT
 
 class Parser {
 public:
-    Parser(ClearCore::EthernetTCPServer* server_ref){
+    Parser(/* ClearCore::EthernetTCPServer * server */){
         Parser::available = true;
         Parser::config = config;
-        server = server_ref;
     }
     ~Parser(){
         return;
     }
 
-    int32_t parse_command(char * input_command){
-        uint32_t result;
-        if (config_mode){
-            if ((input_command[0] == C) && (input_command[1] == S)){
-                config_mode = false;
-                nprintf("Configuration Done\n");
-            }
-            else{
-                result = Parser::parse_config_command(input_command);
-                if (result <0) return result;
-            }
+    int32_t key_gen(unsigned char * input_command){
+        uint32_t result = 0x0;
+        for (int i = 0; i <= 3; i++){
+            if (input_command[i] == SPACE || input_command[i] == LF || input_command[i] == CR) break;
+            else result = (result << 8) + input_command[i];
         }
-        else{
-        switch (*(input_command ++)){
-            case M:{
-                switch (*(input_command++)){
-                    case A:{
-                        nprintf("Move Absolute Command\n");
-                        Parser::absolute_motion = true;
-                        result = Parser::parse_movement_command(input_command);
-                        if (result < 0) return result;
+        printf("%X", result);
+        return result;
+    }
+
+    int32_t parse_command(char * input_command){
+        uint32_t result = 0;
+        uint32_t next_state;
+        uint32_t digested_command = key_gen((unsigned char *)input_command);
+        switch (state){
+            case S_NORMAL:{
+                switch(digested_command){
+                    case MOVEABS:{
+                        nprintf("Movement Absolute Command\n");
+                        next_state = S_BUSY;
                     } break;
-                    case R:{
-                        nprintf("Move Relative Command\n");
-                        Parser::absolute_motion = false;
-                        result = Parser::parse_movement_command(input_command);
-                        if (result < 0) return result;
+                    case MOVEREL:{
+                        nprintf("Movement Relative Command\n");
+                        next_state = S_BUSY;
+                    } break;
+                    default: {
+                        result = CMD_UNKNOWN_ERROR;
+                    } break;
+                }
+            } break;
+            case S_BUSY:{
+                switch (digested_command){
+                    case ESTOP:{
+                        nprintf("Stopping Motors\n");
+                        next_state = S_NORMAL;
                     } break;
                     default:{
-                        return -1;
-                    }
-                }
-            } break;
-            case C:{
-                if (*(input_command++) == S){
-                    Parser::config_mode = true;
-                    Parser::last_valid_axis_idx;
-                    nprintf("@Ready for Configuration\n",server);
-                }
-            } break;
-            case K:{
-                nprintf("MOTORS STOPPED\n");
-                return 0;
-            } break;
-            case QUESTION:{
-                switch (*(input_command ++)){
-                    case P:{
-                        nprintf("Query Position\n");
-                    } break;
-                    case C:{
-                        nprintf("CURRENT CONFIG\n");
-                        nprintf("E-Stop I/O Port: %d\n", config.e_stop_io_port);
-                        nprintf("Valid Axes: %s\n",config.valid_axes);
-                        for (int i =0; i<MAX_AXES; i++){
-                            nprintf("- Motor: %d\n", i);
-                            nprintf(" - Axis: %c\n", config.motors[i].axis);
-                            nprintf(" - CM/Step: %f\n", config.motors[i].cm_step);
-                            nprintf(" - Reverse: %s\n",(config.motors[i].reverse) ? "True":"False");
-                            nprintf(" - Configured: %s\n",(config.motors[i].configured) ? "True":"False");
-                        }
-                    } break;
-                    case A:{
-                        cout << "Query Axes\n";
-                        nprintf("Last Command: %c:%.2fcm %c:%.2fcm %c:%.2fcm\n",Parser::config.valid_axes[0],axis_floats[0],Parser::config.valid_axes[1],axis_floats[1],Parser::config.valid_axes[2],axis_floats[2]);
-                    } break;
-                    case S:{
-                        cout << "Query Status\n";
+                        result = MOTOR_BUSY;
                     } break;
                 }
             } break;
-            default:{
-                return -1;
-            }
         }
-        }
-        return 0;
+        state = next_state;
+        return result;
     }
 
     bool is_axis(char value){
@@ -279,18 +248,18 @@ private:
     bool config_mode = false;
     config_profile config;
     char command[MAX_CMD_LEN + 1];
+    uint32_t state = S_NORMAL;
     ClearCore::EthernetTCPServer * server;
 };
 
 int main(){
-    ClearCore::EthernetTCPServer TCP_Server;
-    Parser temp_parser(&TCP_Server);
+    printf("Loading\n");
+    Parser temp_parser;
     Parser* parser = &temp_parser;
     char command_stream[128];
     while(1){
-        nfgets(&command_stream[0],128,stdin, &TCP_Server);
-        printf("%s",&command_stream[0]);
-        if (command_stream[0] == AT){//"@"
+        fgets(&command_stream[0],128,stdin);
+        /* if (command_stream[0] == AT){//"@"
             int port;
             sscanf(&command_stream[1],"%d", &port);
             printf("Port: %d\n",port);
@@ -300,7 +269,7 @@ int main(){
             ClearCore::EthernetTCPServer TCP_Server;
             Parser temp_parser(&TCP_Server);
             parser = &temp_parser;
-        }
+        } */
         switch (parser->parse_command(&command_stream[0])){
             case CMD_FORMAT_ERROR:
                 nprintf("CMD FORMAT ERROR\n");
@@ -325,6 +294,9 @@ int main(){
                 break;
             case PARSE_BOOL_ERR:
                 nprintf("MOTOR CONFIG BOOLEAN ERROR\n");
+                break;
+            case CMD_UNKNOWN_ERROR:
+                nprintf("UNKNOWN COMMAND ENTERED\n");
                 break;
             default:
                 break;

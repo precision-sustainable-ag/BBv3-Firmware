@@ -1,5 +1,6 @@
 #include <config.hpp>
 #include <commands.hpp>
+#include <chars.hpp>
 #include <types.hpp>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +15,7 @@
 namespace ClearCore {
 
 EthernetTCPServer::EthernetTCPServer(uint16_t port){
+    printf("Entering net config.");
     char rx_buf[MAX_BUFFER];
     connfd = 0;
     sockaddr_in servAddr;

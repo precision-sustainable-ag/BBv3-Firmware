@@ -1,9 +1,13 @@
+#ifndef TYPES_H_
+#define TYPES_H_
+#include "chars.h"
+
 #include <cstdint>
 
 typedef struct motor {
     bool configured = false;
     void * axis = nullptr;
-    uint step_per_rev;
+    uint32_t step_per_rev;
     int limit_switch = -1;
     bool reverse = false;
 } motor;
@@ -15,25 +19,10 @@ typedef struct axis {
     void * motors[4] = {nullptr, nullptr, nullptr, nullptr};
 } axis;
 
-typedef struct axis {
-    double cm_rev;
-} axis;
-
 typedef struct config {
     int e_stop_io_port = -1;
     axis * axes[4];
     motor * motors[4];
 } config_profile;
 
-namespace ClearCore {
-class EthernetTCPServer {
-public:
-    explicit EthernetTCPServer(uint16_t port = PORT);
-    ~EthernetTCPServer();
-    uint32_t Send(char * buffer);
-    uint16_t Read(char * buffer, uint32_t length);
-private:
-    //std::thread * TCP_thread;
-    int serverSd, bindStatus, connfd;
-};
-}
+#endif

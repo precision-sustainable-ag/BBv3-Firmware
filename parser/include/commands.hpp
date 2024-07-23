@@ -1,36 +1,33 @@
-#define A 65
-#define B 66
-#define C 67
-#define D 68
-#define E 69
-#define F 70
-#define G 71
-#define H 72
-#define I 73
-#define J 74
-#define K 75
-#define L 76
-#define M 77
-#define N 78
-#define O 79
-#define P 80
-#define Q 81
-#define R 82
-#define S 83
-#define T 84
-#define U 85
-#define V 86
-#define W 87
-#define X 88
-#define Y 89
-#define Z 90
-#define QUESTION 63
-#define SPACE 32
-#define CR 13
-#define LF 10
-#define BAR 124 // |
-#define NULL_CHAR 0
-#define DECIMAL_POINT 46
-#define ZERO 48
-#define NINE 57
-#define AT 64
+#define MOVEABS 0x4D41
+#define MOVEABS_STR "MA"
+
+#define MOVEREL 0x4D52
+#define MOVEREL_STR "MR"
+
+#define CONFIGSET 0x4353
+#define CONFIGSET_STR "CS"
+
+#define ESTOP 0x4553
+#define ESTOP_STR "ES"
+
+#define QUERYPOS 0x3F50
+#define QUERYPOS_STR "?P"
+
+#define QUERYSTATUS 0x3F53
+#define QUERYSTATUS_STR "?S"
+
+#define QUERYAXDES 0x3F41
+#define QUERYAXDES_STR "?A"
+
+#define MOTOR 0x4D6F74
+#define MOTOR_STR "Mot"
+
+#define AXIS 0x41786973
+#define AXIS_STR "Axis"
+
+#define ESTOPPIN 0x45
+#define ESTOPPIN_STR "E"
+
+#define DONE 0x446F6E65
+#define DONE_STR "Done"
+

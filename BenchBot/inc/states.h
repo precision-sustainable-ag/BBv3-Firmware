@@ -1,3 +1,6 @@
+#ifndef STATES_H_
+#define STATES_H_
+
 #define S_NORMAL 0x0100
 #define S_BUSY 0x0200
 #define S_CONFIG 0x0800
@@ -8,3 +11,4 @@
 #define S_STATE_MASK 0xff00
 #define S_CONF_STATE_MASK 0x0700
 
+#endif
